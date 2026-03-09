@@ -2,6 +2,7 @@
 
 import { useState, useRef, type KeyboardEvent } from 'react';
 import LegalModal from './LegalModal';
+import HowItWorksModal from './HowItWorksModal';
 
 type Props = {
   onSend: (message: string) => void;
@@ -95,6 +96,8 @@ export default function ChatInput({ onSend, disabled, rateLimitInfo }: Props) {
               {' '}&{' '}
               <span className="font-medium text-[var(--text-secondary)]">data.gouv.fr</span>
             </span>
+            <span className="text-[var(--border)]">·</span>
+            <HowItWorksModal />
             <span className="text-[var(--border)]">·</span>
             <LegalModal />
           </div>
