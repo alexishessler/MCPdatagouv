@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
 
     // ── Build Mistral messages (only role + content from history) ──
     const mistral = new Mistral({ apiKey });
-    const model = process.env.MISTRAL_MODEL || 'mistral-medium-latest';
+    const model = process.env.MISTRAL_MODEL || 'mistral-large-latest';
 
     // Only pass simple user/assistant messages from frontend history
     const historyMessages = messages.slice(-10).map((m: Record<string, string>) => ({
