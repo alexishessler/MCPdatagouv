@@ -12,25 +12,18 @@ export default function LegalModal() {
         onClick={() => setOpen(true)}
         className="text-[10px] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
       >
-        Mentions légales
+        Mentions l&eacute;gales
       </button>
     );
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        onClick={() => setOpen(false)}
-      />
-
-      {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[85vh] overflow-y-auto animate-fade-in-up">
-        {/* Header */}
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setOpen(false)} />
+      <div className="relative bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[85vh] overflow-hidden animate-fade-in-up">
         <div className="sticky top-0 bg-white rounded-t-2xl border-b border-[var(--border)] px-6 py-4 flex items-center justify-between">
           <h2 className="text-base font-bold text-[var(--text)]">
-            Mentions légales & Confidentialité
+            Mentions l&eacute;gales &amp; Confidentialit&eacute;
           </h2>
           <button
             onClick={() => setOpen(false)}
@@ -42,13 +35,11 @@ export default function LegalModal() {
           </button>
         </div>
 
-        {/* Content */}
-        <div className="px-6 py-5 space-y-5 text-sm text-[var(--text-secondary)] leading-relaxed">
-          {/* Éditeur */}
+        <div className="px-6 py-5 space-y-5 text-sm text-[var(--text-secondary)] leading-relaxed overflow-y-auto max-h-[65vh]">
           <section>
-            <h3 className="text-[var(--text)] font-semibold mb-1.5">Éditeur du site</h3>
+            <h3 className="text-[var(--text)] font-semibold mb-1.5">&Eacute;diteur du site</h3>
             <p>
-              Ce site est édité par <span className="font-medium text-[var(--text)]">Alexis Hessler</span>, personne physique.
+              Ce site est &eacute;dit&eacute; par <span className="font-medium text-[var(--text)]">Alexis Hessler</span>, personne physique.
             </p>
             <p className="mt-1.5">
               Contact :{' '}
@@ -70,75 +61,64 @@ export default function LegalModal() {
             </p>
           </section>
 
-          {/* Hébergement */}
           <section>
-            <h3 className="text-[var(--text)] font-semibold mb-1.5">Hébergement</h3>
-            <p>Ce site est hébergé par Vercel Inc. ou auto-hébergé sur VPS selon la configuration de déploiement.</p>
-          </section>
-
-          {/* Données collectées */}
-          <section>
-            <h3 className="text-[var(--text)] font-semibold mb-1.5">Données collectées</h3>
+            <h3 className="text-[var(--text)] font-semibold mb-1.5">Donn&eacute;es collect&eacute;es</h3>
             <p className="mb-2">
-              Ce site collecte uniquement les données strictement nécessaires à son fonctionnement :
+              Seules les donn&eacute;es strictement n&eacute;cessaires au fonctionnement sont collect&eacute;es :
             </p>
             <ul className="space-y-1.5 pl-4">
               <li className="flex items-start gap-2">
-                <span className="text-[var(--french-blue)] mt-1 text-xs">●</span>
-                <span><span className="font-medium text-[var(--text)]">Adresse IP</span> — utilisée uniquement pour le contrôle du quota journalier (100 requêtes/jour). Non stockée de façon permanente.</span>
+                <span className="text-[var(--french-blue)] mt-1 text-xs">&bull;</span>
+                <span><span className="font-medium text-[var(--text)]">Adresse IP</span> &mdash; utilis&eacute;e uniquement pour le contr&ocirc;le du quota. Non stock&eacute;e de fa&ccedil;on permanente.</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-[var(--french-blue)] mt-1 text-xs">●</span>
-                <span><span className="font-medium text-[var(--text)]">Identifiant de session</span> — généré aléatoirement dans votre navigateur pour limiter les requêtes par session (10/session). Aucun cookie n&apos;est utilisé.</span>
+                <span className="text-[var(--french-blue)] mt-1 text-xs">&bull;</span>
+                <span><span className="font-medium text-[var(--text)]">Identifiant de session</span> &mdash; g&eacute;n&eacute;r&eacute; al&eacute;atoirement dans votre navigateur. Aucun cookie n&apos;est utilis&eacute;.</span>
               </li>
             </ul>
+            <p className="mt-3 text-xs font-medium text-[var(--text)] bg-[var(--bg)] rounded-lg px-3 py-2">
+              Les IP et sessions sont purg&eacute;es automatiquement toutes les 24h si vous ne revenez pas sur le site.
+            </p>
           </section>
 
-          {/* Ce qu'on ne fait pas */}
           <section>
             <h3 className="text-[var(--text)] font-semibold mb-1.5">Ce que nous ne faisons pas</h3>
             <ul className="space-y-1 pl-4">
               {[
                 'Aucun cookie de tracking ou publicitaire',
-                'Aucune collecte de données personnelles',
-                'Aucun partage de données avec des tiers',
+                'Aucune collecte de donn\u00e9es personnelles',
+                'Aucun partage de donn\u00e9es avec des tiers',
                 'Aucun stockage permanent des conversations',
+                'Aucune donn\u00e9e sauvegard\u00e9e \u2014 ni fichier, ni conversation, ni r\u00e9sultat',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <span className="text-green-600 mt-0.5 text-xs">✓</span>
+                  <span className="text-green-600 mt-0.5 text-xs">&check;</span>
                   <span>{item}</span>
                 </li>
               ))}
             </ul>
           </section>
 
-          {/* Services tiers */}
           <section>
             <h3 className="text-[var(--text)] font-semibold mb-1.5">Services tiers</h3>
             <ul className="space-y-1 pl-4">
               <li className="flex items-start gap-2">
-                <span className="text-[var(--french-blue)] mt-1 text-xs">●</span>
-                <span><span className="font-medium text-[var(--text)]">Mistral AI</span> — vos messages sont envoyés à l&apos;API Mistral pour générer les réponses. Voir la <a href="https://mistral.ai/fr/terms/#privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[var(--french-blue)] hover:underline">politique de confidentialité de Mistral</a>.</span>
+                <span className="text-[var(--french-blue)] mt-1 text-xs">&bull;</span>
+                <span><span className="font-medium text-[var(--text)]">Mistral AI</span> &mdash; vos messages sont envoy&eacute;s &agrave; l&apos;API Mistral pour g&eacute;n&eacute;rer les r&eacute;ponses. Voir la <a href="https://mistral.ai/fr/terms/#privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[var(--french-blue)] hover:underline">politique de confidentialit&eacute; de Mistral</a>.</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-[var(--french-blue)] mt-1 text-xs">●</span>
-                <span><span className="font-medium text-[var(--text)]">data.gouv.fr</span> — les recherches sont transmises au serveur MCP officiel de data.gouv.fr (données publiques).</span>
+                <span className="text-[var(--french-blue)] mt-1 text-xs">&bull;</span>
+                <span><span className="font-medium text-[var(--text)]">data.gouv.fr</span> &mdash; plateforme officielle des donn&eacute;es ouvertes fran&ccedil;aises.</span>
               </li>
             </ul>
           </section>
 
-          {/* Code source */}
           <section className="bg-[var(--bg)] rounded-xl p-4">
             <p className="text-xs text-[var(--text-secondary)]">
-              Ce projet est open source :{' '}
-              <a
-                href="https://github.com/alexishessler/MCPdatagouv"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[var(--french-blue)] hover:underline font-medium"
-              >
-                github.com/alexishessler/MCPdatagouv
-              </a>
+              Projets open source :{' '}
+              <a href="https://github.com/alexishessler/MCPdatagouv" target="_blank" rel="noopener noreferrer" className="text-[var(--french-blue)] hover:underline font-medium">MCPdatagouv</a>
+              {' '}&middot;{' '}
+              <a href="https://github.com/alexishessler/loi-de-benford" target="_blank" rel="noopener noreferrer" className="text-[var(--french-blue)] hover:underline font-medium">Loi de Benford</a>
             </p>
           </section>
         </div>

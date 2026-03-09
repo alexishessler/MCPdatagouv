@@ -2,7 +2,6 @@
 
 import { useState, useRef, type KeyboardEvent } from 'react';
 import LegalModal from './LegalModal';
-import HowItWorksModal from './HowItWorksModal';
 
 type Props = {
   onSend: (message: string) => void;
@@ -92,12 +91,12 @@ export default function ChatInput({ onSend, disabled, rateLimitInfo }: Props) {
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-[var(--text-tertiary)] tracking-wide">
               Propulsé par{' '}
+              <span className="font-medium text-[var(--text-secondary)]">Alexis</span>
+              {', '}
               <span className="font-medium text-[var(--text-secondary)]">Mistral AI</span>
-              {' '}&{' '}
-              <span className="font-medium text-[var(--text-secondary)]">data.gouv.fr</span>
+              {' & '}
+              <span className="font-medium text-[var(--text-secondary)]">Data.gouv</span>
             </span>
-            <span className="text-[var(--border)]">·</span>
-            <HowItWorksModal />
             <span className="text-[var(--border)]">·</span>
             <LegalModal />
           </div>
