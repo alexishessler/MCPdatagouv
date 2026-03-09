@@ -9,41 +9,55 @@ import {
   getToolDisplayName,
 } from '@/lib/mcp-client';
 
-const SYSTEM_PROMPT = `Tu es l'assistant MCP DataGouv Explorer, un chatbot intelligent spécialisé dans l'exploration des données ouvertes françaises via data.gouv.fr.
+const SYSTEM_PROMPT = `Tu es l'assistant MCP DataGouv Explorer. Tu explores les données ouvertes françaises via le serveur MCP de data.gouv.fr.
 
-Tu es connecté au serveur MCP officiel de data.gouv.fr et tu peux :
-- Rechercher des jeux de données par mots-clés
-- Obtenir les détails et métadonnées d'un jeu de données
-- Lister les ressources (fichiers) disponibles
-- Interroger directement les données tabulaires (CSV, Excel)
-- Rechercher des APIs et services de données
-- Obtenir des statistiques de fréquentation
+## Tes capacités (outils MCP)
+- search_datasets : rechercher des jeux de données par mots-clés
+- get_dataset_info : obtenir les détails d'un dataset spécifique
+- list_dataset_resources : lister les fichiers d'un dataset
+- query_resource_data : interroger des données tabulaires (CSV, Excel)
+- search_dataservices : chercher des APIs publiques
 
-Tu réponds TOUJOURS en français. Quand tu présentes des résultats :
-- Utilise des titres et du formatage Markdown clair
-- Inclus les liens vers data.gouv.fr quand disponibles
-- Mets en avant le nombre de ressources, la date de mise à jour, l'organisation
-- Propose d'explorer plus en détail si pertinent
-- Sois enthousiaste sur le potentiel des données ouvertes !
+## Règles STRICTES
+1. Réponds TOUJOURS en français
+2. Quand tu reçois des résultats d'outils, **synthétise-les** — ne les recopie JAMAIS en entier
+3. Présente les résultats de façon claire : titre, organisation, nb de ressources, date de mise à jour
+4. Utilise du Markdown : titres ##, listes à puces, **gras** pour les éléments importants
+5. Inclus les liens data.gouv.fr quand disponibles
+6. Propose d'explorer un dataset précis si la recherche retourne plusieurs résultats
+7. Si aucun résultat, suggère des termes de recherche alternatifs
+8. Sois concis et utile — pas de blabla inutile
+9. IMPORTANT : Réponds directement à la question de l'utilisateur. N'invente pas de résultats.`;
 
-Si tu ne trouves pas ce que l'utilisateur cherche, suggère des termes de recherche alternatifs.`;
+const MAX_TOOL_RESULT_CHARS = 6000;
 
 /**
  * Extract readable text from an MCP CallToolResult.
  * MCP returns { content: [{ type: "text", text: "..." }, ...] }
+ * Truncates to MAX_TOOL_RESULT_CHARS to avoid overwhelming the LLM.
  */
 function extractMCPText(result: unknown): string {
-  if (typeof result === 'string') return result;
-  if (result && typeof result === 'object') {
+  let text: string;
+  if (typeof result === 'string') {
+    text = result;
+  } else if (result && typeof result === 'object') {
     const obj = result as Record<string, unknown>;
     if (Array.isArray(obj.content)) {
-      return obj.content
+      text = obj.content
         .filter((c: Record<string, unknown>) => c.type === 'text')
         .map((c: Record<string, unknown>) => c.text)
         .join('\n');
+    } else {
+      text = JSON.stringify(result);
     }
+  } else {
+    text = JSON.stringify(result);
   }
-  return JSON.stringify(result);
+
+  if (text.length > MAX_TOOL_RESULT_CHARS) {
+    return text.slice(0, MAX_TOOL_RESULT_CHARS) + '\n\n[... résultats tronqués — utilise get_dataset_info pour plus de détails sur un dataset spécifique]';
+  }
+  return text;
 }
 
 export async function POST(req: NextRequest) {
@@ -97,6 +111,7 @@ export async function POST(req: NextRequest) {
     try {
       mcpClient = await createMCPClient();
       const mcpTools = await listMCPTools(mcpClient);
+      console.log(`MCP connected — ${mcpTools.length} tools available:`, mcpTools.map(t => t.name));
       mistralTools = mcpToolsToMistralFormat(mcpTools);
     } catch (mcpError) {
       console.error('MCP connection failed:', mcpError);
@@ -104,7 +119,7 @@ export async function POST(req: NextRequest) {
 
     // ── Build Mistral messages (only role + content from history) ──
     const mistral = new Mistral({ apiKey });
-    const model = process.env.MISTRAL_MODEL || 'mistral-small-latest';
+    const model = process.env.MISTRAL_MODEL || 'mistral-medium-latest';
 
     // Only pass simple user/assistant messages from frontend history
     const historyMessages = messages.slice(-10).map((m: Record<string, string>) => ({
@@ -175,8 +190,10 @@ export async function POST(req: NextRequest) {
         let resultText: string;
         let resultData: unknown;
         try {
+          console.log(`Calling MCP tool: ${fnName}`, fnArgs);
           const mcpResult = await callMCPTool(mcpClient, fnName, fnArgs);
           resultText = extractMCPText(mcpResult);
+          console.log(`MCP result for ${fnName}: ${resultText.length} chars`);
           resultData = mcpResult;
         } catch (toolError) {
           console.error(`MCP tool error (${fnName}):`, toolError);
