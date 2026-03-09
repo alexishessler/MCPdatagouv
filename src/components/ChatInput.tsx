@@ -41,11 +41,11 @@ export default function ChatInput({ onSend, disabled, rateLimitInfo }: Props) {
   };
 
   return (
-    <div className="flex-shrink-0 border-t border-white/[0.04] glass-strong px-4 py-3">
+    <div className="flex-shrink-0 bg-white border-t border-[var(--border)] px-4 py-3">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-end gap-2.5">
-          {/* Input field with gradient border */}
-          <div className="flex-1 gradient-border rounded-xl">
+          {/* Input with gradient focus border */}
+          <div className="flex-1 gradient-border-light rounded-xl">
             <textarea
               ref={textareaRef}
               value={input}
@@ -54,10 +54,11 @@ export default function ChatInput({ onSend, disabled, rateLimitInfo }: Props) {
                 autoResize();
               }}
               onKeyDown={handleKeyDown}
-              placeholder="Posez votre question sur les données ouvertes françaises..."
+              placeholder="Posez votre question sur les données ouvertes..."
               disabled={disabled}
               rows={1}
-              className="w-full bg-bg-secondary/90 rounded-xl px-4 py-3 text-[0.9rem] text-white placeholder-gray-600 resize-none focus:outline-none disabled:opacity-40 transition-opacity"
+              className="w-full bg-[var(--bg)] rounded-xl px-4 py-2.5 text-[0.9rem] text-[var(--text)] placeholder-[var(--text-tertiary)] resize-none focus:outline-none disabled:opacity-40 transition-opacity border border-[var(--border)]"
+              style={{ borderColor: 'transparent' }}
             />
           </div>
 
@@ -65,11 +66,11 @@ export default function ChatInput({ onSend, disabled, rateLimitInfo }: Props) {
           <button
             onClick={handleSubmit}
             disabled={disabled || !input.trim()}
-            className="flex-shrink-0 w-11 h-11 rounded-xl btn-send flex items-center justify-center"
+            className="flex-shrink-0 w-10 h-10 btn-send flex items-center justify-center"
             aria-label="Envoyer"
           >
             <svg
-              className="w-[18px] h-[18px] text-white"
+              className="w-4 h-4 text-white"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -84,15 +85,16 @@ export default function ChatInput({ onSend, disabled, rateLimitInfo }: Props) {
           </button>
         </div>
 
-        {/* Footer info */}
-        <div className="flex justify-between items-center mt-2 px-1">
-          <span className="text-[10px] text-gray-600 tracking-wide">
-            Propulsé par <span className="text-gray-500">Mistral AI</span> &{' '}
-            <span className="text-gray-500">data.gouv.fr</span>
+        {/* Footer */}
+        <div className="flex justify-between items-center mt-1.5 px-1">
+          <span className="text-[10px] text-[var(--text-tertiary)] tracking-wide">
+            Propulsé par{' '}
+            <span className="font-medium text-[var(--text-secondary)]">Mistral AI</span>
+            {' '}&{' '}
+            <span className="font-medium text-[var(--text-secondary)]">data.gouv.fr</span>
           </span>
-          <span className="text-[10px] text-gray-600 tabular-nums">
-            {rateLimitInfo.sessionRemaining}/5 session ·{' '}
-            {rateLimitInfo.dailyRemaining}/50 jour
+          <span className="text-[10px] text-[var(--text-tertiary)] tabular-nums">
+            {rateLimitInfo.sessionRemaining}/5 · {rateLimitInfo.dailyRemaining}/50
           </span>
         </div>
       </div>

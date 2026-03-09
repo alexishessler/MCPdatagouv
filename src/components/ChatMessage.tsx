@@ -2,7 +2,7 @@
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 type ToolResult = {
   name: string;
@@ -16,9 +16,15 @@ type Props = {
     content: string;
     toolResults?: ToolResult[];
   };
+  shouldAnimate?: boolean;
+  onAnimationDone?: () => void;
 };
 
-export default function ChatMessage({ message }: Props) {
+export default function ChatMessage({
+  message,
+  shouldAnimate = false,
+  onAnimationDone,
+}: Props) {
   const isUser = message.role === 'user';
 
   return (
@@ -29,18 +35,18 @@ export default function ChatMessage({ message }: Props) {
     >
       {/* Avatar */}
       <div
-        className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm ${
+        className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs ${
           isUser
-            ? 'bg-french-blue/20 ring-1 ring-french-blue/20'
-            : 'bg-gradient-to-br from-french-blue/20 to-french-red/10 ring-1 ring-white/5'
+            ? 'bg-[var(--bg-user)] ring-1 ring-[var(--french-blue)]/10'
+            : 'bg-[var(--bg-warm)] ring-1 ring-[var(--border)]'
         }`}
       >
-        {isUser ? '👤' : '🤖'}
+        {isUser ? '👤' : '🇫🇷'}
       </div>
 
-      {/* Message content */}
+      {/* Content */}
       <div className={`max-w-[82%] min-w-0 ${isUser ? 'items-end' : ''}`}>
-        {/* Tool results (collapsible) */}
+        {/* Tool results */}
         {message.toolResults && message.toolResults.length > 0 && (
           <div className="mb-2 space-y-1.5">
             {message.toolResults.map((tool, i) => (
@@ -50,20 +56,82 @@ export default function ChatMessage({ message }: Props) {
         )}
 
         {/* Message bubble */}
-        <div
-          className={`rounded-2xl px-4 py-2.5 ${
-            isUser
-              ? 'msg-user rounded-tr-md'
-              : 'msg-bot rounded-tl-md'
-          }`}
-        >
-          <div className="prose-chat">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {message.content}
-            </ReactMarkdown>
-          </div>
+        <div className={`px-4 py-2.5 ${isUser ? 'msg-user' : 'msg-bot'}`}>
+          {shouldAnimate ? (
+            <StreamingText
+              text={message.content}
+              onDone={onAnimationDone}
+            />
+          ) : (
+            <div className="prose-chat">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {message.content}
+              </ReactMarkdown>
+            </div>
+          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Displays text word-by-word with a tricolor flash on each new word.
+ * Once complete, renders full Markdown.
+ */
+function StreamingText({
+  text,
+  onDone,
+}: {
+  text: string;
+  onDone?: () => void;
+}) {
+  const [displayState, setDisplayState] = useState({
+    completed: '',
+    current: '',
+    done: false,
+  });
+
+  useEffect(() => {
+    const tokens = text.match(/\S+|\s+/g) || [];
+    let idx = 0;
+    let built = '';
+
+    const interval = setInterval(() => {
+      if (idx < tokens.length) {
+        built += idx > 0 ? tokens[idx - 1] : '';
+        setDisplayState({
+          completed: built,
+          current: tokens[idx],
+          done: false,
+        });
+        idx++;
+      } else {
+        clearInterval(interval);
+        setDisplayState({ completed: text, current: '', done: true });
+        onDone?.();
+      }
+    }, 18);
+
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text]);
+
+  if (displayState.done) {
+    return (
+      <div className="prose-chat">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+      </div>
+    );
+  }
+
+  return (
+    <div className="prose-chat whitespace-pre-wrap">
+      <span>{displayState.completed}</span>
+      <span className="word-flash" key={displayState.completed.length}>
+        {displayState.current}
+      </span>
+      <span className="tricolor-cursor">▎</span>
     </div>
   );
 }
@@ -77,9 +145,11 @@ function ToolResultCard({ tool }: { tool: ToolResult }) {
         onClick={() => setOpen(!open)}
         className="w-full flex items-center gap-2 px-3 py-2 text-left"
       >
-        <span className="text-xs">{tool.displayName}</span>
+        <span className="text-xs text-[var(--french-blue)] font-medium">
+          {tool.displayName}
+        </span>
         <svg
-          className={`w-3 h-3 text-gray-500 ml-auto transition-transform duration-200 ${
+          className={`w-3 h-3 text-[var(--text-tertiary)] ml-auto transition-transform duration-200 ${
             open ? 'rotate-180' : ''
           }`}
           fill="none"
@@ -95,8 +165,8 @@ function ToolResultCard({ tool }: { tool: ToolResult }) {
         </svg>
       </button>
       {open && (
-        <div className="px-3 pb-2">
-          <pre className="text-[11px] text-gray-400 bg-black/30 rounded-lg p-2.5 overflow-x-auto max-h-48 leading-relaxed">
+        <div className="px-3 pb-2.5">
+          <pre className="text-[11px] text-[var(--text-secondary)] bg-[var(--bg-code)] rounded-lg p-2.5 overflow-x-auto max-h-48 leading-relaxed">
             {JSON.stringify(tool.data, null, 2)}
           </pre>
         </div>

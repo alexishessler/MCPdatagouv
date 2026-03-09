@@ -3,7 +3,7 @@ import ChatBot from '@/components/ChatBot';
 
 export default function Home() {
   return (
-    <main className="flex flex-col h-screen bg-bg-primary bg-grid">
+    <main className="flex flex-col h-screen bg-[var(--bg)]">
       <Header />
       <ChatBot />
     </main>
