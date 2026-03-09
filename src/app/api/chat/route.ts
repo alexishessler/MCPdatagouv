@@ -136,19 +136,24 @@ export async function POST(req: NextRequest) {
       ...historyMessages,
     ];
 
-    // ── First Mistral call ──
-    const callMistral = async (msgs: Array<Record<string, unknown>>) => {
+    // ── Mistral call helper ──
+    const callMistral = async (
+      msgs: Array<Record<string, unknown>>,
+      forceTools = false
+    ) => {
       const opts: Record<string, unknown> = { model, messages: msgs };
       if (mistralTools.length > 0) {
         opts.tools = mistralTools;
-        opts.toolChoice = 'auto';
+        // 'any' = MUST call at least one tool; 'auto' = model decides
+        opts.toolChoice = forceTools ? 'any' : 'auto';
       }
       return mistral.chat.complete(
         opts as Parameters<typeof mistral.chat.complete>[0]
       );
     };
 
-    let response = await callMistral(mistralMessages);
+    // First call: force tool use so we always search data.gouv.fr
+    let response = await callMistral(mistralMessages, true);
     let choice = response.choices?.[0];
 
     if (!choice) {
