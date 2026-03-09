@@ -236,45 +236,13 @@ body {
 .typing-dot:nth-child(2) { animation-delay: -0.16s; }
 .typing-dot:nth-child(3) { animation-delay: 0s; }
 
-/* ─── Tricolor streaming cursor ─── */
-@keyframes tricolor-blink {
-  0%   { color: var(--french-blue); opacity: 1; }
-  33%  { color: #FFFFFF; opacity: 0.8; }
-  66%  { color: var(--french-red); opacity: 1; }
-  100% { color: var(--french-blue); opacity: 1; }
+/* ─── Streaming cursor ─── */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
-.tricolor-cursor {
-  animation: tricolor-blink 0.8s ease-in-out infinite;
-  font-weight: 300;
-  margin-left: 1px;
-}
-
-/* ─── Tricolor powder trail ─── */
-@keyframes tricolor-powder {
-  0% {
-    color: var(--french-blue);
-    text-shadow:
-      3px 0 10px rgba(237, 41, 57, 0.5),
-      -2px 0 10px rgba(0, 35, 149, 0.5),
-      0 0 6px rgba(255, 255, 255, 0.8);
-  }
-  35% {
-    color: var(--french-red);
-    text-shadow:
-      2px 0 6px rgba(237, 41, 57, 0.3),
-      -2px 0 6px rgba(0, 35, 149, 0.2);
-  }
-  70% {
-    color: var(--text);
-    text-shadow: 0 0 3px rgba(0, 35, 149, 0.1);
-  }
-  100% {
-    color: var(--text);
-    text-shadow: none;
-  }
-}
-.word-flash {
-  animation: tricolor-powder 0.8s ease-out forwards;
+.prose-chat code:last-of-type:only-child {
+  /* no special styling needed */
 }
 
 /* ─── Prose / Markdown (light theme) ─── */

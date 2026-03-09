@@ -2,7 +2,7 @@
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 type ToolResult = {
   name: string;
@@ -76,8 +76,7 @@ export default function ChatMessage({
 }
 
 /**
- * Displays text word-by-word with a tricolor flash on each new word.
- * Once complete, renders full Markdown.
+ * Progressive streaming: renders Markdown incrementally as words appear.
  */
 function StreamingText({
   text,
@@ -86,52 +85,38 @@ function StreamingText({
   text: string;
   onDone?: () => void;
 }) {
-  const [displayState, setDisplayState] = useState({
-    completed: '',
-    current: '',
-    done: false,
-  });
+  const tokens = useMemo(() => text.match(/\S+|\s+/g) || [], [text]);
+  const [tokenCount, setTokenCount] = useState(0);
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
-    const tokens = text.match(/\S+|\s+/g) || [];
     let idx = 0;
-    let built = '';
+    setTokenCount(0);
+    setDone(false);
 
     const interval = setInterval(() => {
-      if (idx < tokens.length) {
-        built += idx > 0 ? tokens[idx - 1] : '';
-        setDisplayState({
-          completed: built,
-          current: tokens[idx],
-          done: false,
-        });
-        idx++;
-      } else {
+      idx++;
+      if (idx >= tokens.length) {
         clearInterval(interval);
-        setDisplayState({ completed: text, current: '', done: true });
+        setTokenCount(tokens.length);
+        setDone(true);
         onDone?.();
+      } else {
+        setTokenCount(idx);
       }
-    }, 18);
+    }, 20);
 
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text]);
 
-  if (displayState.done) {
-    return (
-      <div className="prose-chat">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
-      </div>
-    );
-  }
+  const visibleText = done ? text : tokens.slice(0, tokenCount).join('');
 
   return (
-    <div className="prose-chat whitespace-pre-wrap">
-      <span>{displayState.completed}</span>
-      <span className="word-flash" key={displayState.completed.length}>
-        {displayState.current}
-      </span>
-      <span className="tricolor-cursor">▎</span>
+    <div className="prose-chat">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        {done ? text : visibleText + '▎'}
+      </ReactMarkdown>
     </div>
   );
 }
