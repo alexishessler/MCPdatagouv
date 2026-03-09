@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, type KeyboardEvent } from 'react';
+import LegalModal from './LegalModal';
 
 type Props = {
   onSend: (message: string) => void;
@@ -87,14 +88,18 @@ export default function ChatInput({ onSend, disabled, rateLimitInfo }: Props) {
 
         {/* Footer */}
         <div className="flex justify-between items-center mt-1.5 px-1">
-          <span className="text-[10px] text-[var(--text-tertiary)] tracking-wide">
-            Propulsé par{' '}
-            <span className="font-medium text-[var(--text-secondary)]">Mistral AI</span>
-            {' '}&{' '}
-            <span className="font-medium text-[var(--text-secondary)]">data.gouv.fr</span>
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-[var(--text-tertiary)] tracking-wide">
+              Propulsé par{' '}
+              <span className="font-medium text-[var(--text-secondary)]">Mistral AI</span>
+              {' '}&{' '}
+              <span className="font-medium text-[var(--text-secondary)]">data.gouv.fr</span>
+            </span>
+            <span className="text-[var(--border)]">·</span>
+            <LegalModal />
+          </div>
           <span className="text-[10px] text-[var(--text-tertiary)] tabular-nums">
-            {rateLimitInfo.sessionRemaining}/5 · {rateLimitInfo.dailyRemaining}/50
+            {rateLimitInfo.sessionRemaining}/10 · {rateLimitInfo.dailyRemaining}/100
           </span>
         </div>
       </div>

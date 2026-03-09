@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
       const errorMsg =
         rateLimit.reason === 'daily'
           ? "Quota gratuit épuisé pour aujourd'hui ! C'est Alexis qui paye 😅"
-          : 'Limite de session atteinte (5 requêtes). Rafraîchissez la page pour une nouvelle session !';
+          : 'Limite de session atteinte (10 requêtes). Rafraîchissez la page pour une nouvelle session !';
 
       return NextResponse.json(
         {

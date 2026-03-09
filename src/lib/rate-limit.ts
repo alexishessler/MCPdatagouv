@@ -5,8 +5,8 @@ type RateLimitEntry = {
 
 const store = new Map<string, RateLimitEntry>();
 
-const SESSION_LIMIT = parseInt(process.env.RATE_LIMIT_PER_SESSION || '5', 10);
-const DAILY_LIMIT = parseInt(process.env.RATE_LIMIT_DAILY || '50', 10);
+const SESSION_LIMIT = parseInt(process.env.RATE_LIMIT_PER_SESSION || '10', 10);
+const DAILY_LIMIT = parseInt(process.env.RATE_LIMIT_DAILY || '100', 10);
 
 // Cleanup expired entries every 10 minutes
 if (typeof globalThis !== 'undefined') {

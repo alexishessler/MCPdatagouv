@@ -34,8 +34,8 @@ export default function ChatBot() {
   const [isLoading, setIsLoading] = useState(false);
   const [animatingId, setAnimatingId] = useState<string | null>(null);
   const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo>({
-    sessionRemaining: 5,
-    dailyRemaining: 50,
+    sessionRemaining: 10,
+    dailyRemaining: 100,
   });
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const [sessionId] = useState(() =>
