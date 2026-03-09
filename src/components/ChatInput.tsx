@@ -98,9 +98,29 @@ export default function ChatInput({ onSend, disabled, rateLimitInfo }: Props) {
             <span className="text-[var(--border)]">·</span>
             <LegalModal />
           </div>
-          <span className="text-[10px] text-[var(--text-tertiary)] tabular-nums">
-            {rateLimitInfo.sessionRemaining}/10 · {rateLimitInfo.dailyRemaining}/100
-          </span>
+          <div className="relative group">
+            <span className="text-[10px] text-[var(--text-tertiary)] tabular-nums cursor-default">
+              {rateLimitInfo.sessionRemaining}/10
+            </span>
+            {/* Popover */}
+            <div className="absolute bottom-full right-0 mb-2 w-64 p-3 bg-white rounded-xl border border-[var(--border)] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50">
+              <p className="text-xs text-[var(--text)] font-medium mb-1">
+                Il vous reste {rateLimitInfo.sessionRemaining} prompt{rateLimitInfo.sessionRemaining !== 1 ? 's' : ''} pour cette session !
+              </p>
+              <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                Sinon, téléchargez le projet sur{' '}
+                <a
+                  href="https://github.com/alexishessler/MCPdatagouv"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--french-blue)] hover:underline font-medium pointer-events-auto"
+                >
+                  GitHub
+                </a>{' '}
+                et procurez-vous une clef API de n&apos;importe quel LLM ;)
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

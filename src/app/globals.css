@@ -249,14 +249,32 @@ body {
   margin-left: 1px;
 }
 
-/* ─── Tricolor word flash ─── */
-@keyframes tricolor-word {
-  0%   { color: var(--french-blue); }
-  40%  { color: var(--french-red); }
-  100% { color: var(--text); }
+/* ─── Tricolor powder trail ─── */
+@keyframes tricolor-powder {
+  0% {
+    color: var(--french-blue);
+    text-shadow:
+      3px 0 10px rgba(237, 41, 57, 0.5),
+      -2px 0 10px rgba(0, 35, 149, 0.5),
+      0 0 6px rgba(255, 255, 255, 0.8);
+  }
+  35% {
+    color: var(--french-red);
+    text-shadow:
+      2px 0 6px rgba(237, 41, 57, 0.3),
+      -2px 0 6px rgba(0, 35, 149, 0.2);
+  }
+  70% {
+    color: var(--text);
+    text-shadow: 0 0 3px rgba(0, 35, 149, 0.1);
+  }
+  100% {
+    color: var(--text);
+    text-shadow: none;
+  }
 }
 .word-flash {
-  animation: tricolor-word 0.25s ease-out forwards;
+  animation: tricolor-powder 0.8s ease-out forwards;
 }
 
 /* ─── Prose / Markdown (light theme) ─── */
