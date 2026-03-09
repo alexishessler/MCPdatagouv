@@ -1,0 +1,12 @@
+services:
+  mcp-datagouv:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - MISTRAL_MODEL=${MISTRAL_MODEL:-mistral-small-latest}
+      - MCP_SERVER_URL=${MCP_SERVER_URL:-https://mcp.data.gouv.fr/mcp}
+      - RATE_LIMIT_PER_SESSION=${RATE_LIMIT_PER_SESSION:-5}
+      - RATE_LIMIT_DAILY=${RATE_LIMIT_DAILY:-50}
+    restart: unless-stopped
