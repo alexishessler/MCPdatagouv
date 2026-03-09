@@ -1,3 +1,44 @@
+import fs from 'fs';
+import path from 'path';
+
+// ── Config ──
+const SESSION_LIMIT = parseInt(process.env.RATE_LIMIT_PER_SESSION || '10', 10);
+const DAILY_LIMIT = parseInt(process.env.RATE_LIMIT_DAILY || '100', 10);
+
+// ── Persistent global counter (survives server restarts) ──
+const COUNTER_FILE = path.join(process.cwd(), '.daily-counter.json');
+
+type DailyCounter = {
+  date: string; // YYYY-MM-DD
+  count: number;
+};
+
+function getTodayStr(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function readGlobalCounter(): DailyCounter {
+  try {
+    const raw = fs.readFileSync(COUNTER_FILE, 'utf-8');
+    const data: DailyCounter = JSON.parse(raw);
+    if (data.date === getTodayStr()) {
+      return data;
+    }
+  } catch {
+    // File doesn't exist or is corrupted — start fresh
+  }
+  return { date: getTodayStr(), count: 0 };
+}
+
+function writeGlobalCounter(counter: DailyCounter): void {
+  try {
+    fs.writeFileSync(COUNTER_FILE, JSON.stringify(counter), 'utf-8');
+  } catch (err) {
+    console.error('Failed to write daily counter:', err);
+  }
+}
+
+// ── In-memory session limiter (secondary defense) ──
 type RateLimitEntry = {
   count: number;
   resetAt: number;
@@ -5,10 +46,6 @@ type RateLimitEntry = {
 
 const store = new Map<string, RateLimitEntry>();
 
-const SESSION_LIMIT = parseInt(process.env.RATE_LIMIT_PER_SESSION || '10', 10);
-const DAILY_LIMIT = parseInt(process.env.RATE_LIMIT_DAILY || '100', 10);
-
-// Cleanup expired entries every 10 minutes
 if (typeof globalThis !== 'undefined') {
   const cleanup = () => {
     const now = Date.now();
@@ -23,16 +60,19 @@ if (typeof globalThis !== 'undefined') {
   }
 }
 
-function getOrCreate(key: string, ttlMs: number): RateLimitEntry {
+function getOrCreateSession(sessionId: string): RateLimitEntry {
+  const key = `session:${sessionId}`;
   const existing = store.get(key);
+  const ONE_HOUR = 60 * 60 * 1000;
   if (existing && Date.now() < existing.resetAt) {
     return existing;
   }
-  const entry = { count: 0, resetAt: Date.now() + ttlMs };
+  const entry = { count: 0, resetAt: Date.now() + ONE_HOUR };
   store.set(key, entry);
   return entry;
 }
 
+// ── Public API ──
 export type RateLimitResult = {
   allowed: boolean;
   reason: 'session' | 'daily' | null;
@@ -44,17 +84,15 @@ export function checkRateLimit(
   ip: string,
   sessionId: string
 ): RateLimitResult {
-  const ONE_HOUR = 60 * 60 * 1000;
-  const ONE_DAY = 24 * 60 * 60 * 1000;
+  // 1. HARD global daily limit — file-based, survives restarts
+  const globalCounter = readGlobalCounter();
+  const sessionEntry = getOrCreateSession(sessionId);
 
-  const dailyEntry = getOrCreate('daily:global', ONE_DAY);
-  const sessionEntry = getOrCreate(`session:${sessionId}`, ONE_HOUR);
-
+  const dailyRemaining = Math.max(0, DAILY_LIMIT - globalCounter.count);
   const sessionRemaining = Math.max(0, SESSION_LIMIT - sessionEntry.count);
-  const dailyRemaining = Math.max(0, DAILY_LIMIT - dailyEntry.count);
 
-  // Check daily limit
-  if (dailyEntry.count >= DAILY_LIMIT) {
+  // Check global daily limit FIRST (hardest defense)
+  if (globalCounter.count >= DAILY_LIMIT) {
     return {
       allowed: false,
       reason: 'daily',
@@ -73,16 +111,17 @@ export function checkRateLimit(
     };
   }
 
-  // Increment
+  // 2. Increment BOTH counters atomically
+  globalCounter.count++;
+  writeGlobalCounter(globalCounter);
+
   sessionEntry.count++;
-  dailyEntry.count++;
   store.set(`session:${sessionId}`, sessionEntry);
-  store.set('daily:global', dailyEntry);
 
   return {
     allowed: true,
     reason: null,
     sessionRemaining: SESSION_LIMIT - sessionEntry.count,
-    dailyRemaining: DAILY_LIMIT - dailyEntry.count,
+    dailyRemaining: DAILY_LIMIT - globalCounter.count,
   };
 }
