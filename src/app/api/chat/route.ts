@@ -28,6 +28,24 @@ Tu réponds TOUJOURS en français. Quand tu présentes des résultats :
 
 Si tu ne trouves pas ce que l'utilisateur cherche, suggère des termes de recherche alternatifs.`;
 
+/**
+ * Extract readable text from an MCP CallToolResult.
+ * MCP returns { content: [{ type: "text", text: "..." }, ...] }
+ */
+function extractMCPText(result: unknown): string {
+  if (typeof result === 'string') return result;
+  if (result && typeof result === 'object') {
+    const obj = result as Record<string, unknown>;
+    if (Array.isArray(obj.content)) {
+      return obj.content
+        .filter((c: Record<string, unknown>) => c.type === 'text')
+        .map((c: Record<string, unknown>) => c.text)
+        .join('\n');
+    }
+  }
+  return JSON.stringify(result);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const apiKey = process.env.MISTRAL_API_KEY;
@@ -82,31 +100,36 @@ export async function POST(req: NextRequest) {
       mistralTools = mcpToolsToMistralFormat(mcpTools);
     } catch (mcpError) {
       console.error('MCP connection failed:', mcpError);
-      // Continue without tools if MCP server is unavailable
-      mistralTools = [];
     }
 
-    // ── Build Mistral messages ──
+    // ── Build Mistral messages (only role + content from history) ──
     const mistral = new Mistral({ apiKey });
     const model = process.env.MISTRAL_MODEL || 'mistral-small-latest';
 
+    // Only pass simple user/assistant messages from frontend history
+    const historyMessages = messages.slice(-10).map((m: Record<string, string>) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
     const mistralMessages: Array<Record<string, unknown>> = [
       { role: 'system', content: SYSTEM_PROMPT },
-      ...messages.slice(-10), // Keep last 10 messages for context window
+      ...historyMessages,
     ];
 
     // ── First Mistral call ──
-    const chatOptions: Record<string, unknown> = {
-      model,
-      messages: mistralMessages,
+    const callMistral = async (msgs: Array<Record<string, unknown>>) => {
+      const opts: Record<string, unknown> = { model, messages: msgs };
+      if (mistralTools.length > 0) {
+        opts.tools = mistralTools;
+        opts.toolChoice = 'auto';
+      }
+      return mistral.chat.complete(
+        opts as Parameters<typeof mistral.chat.complete>[0]
+      );
     };
 
-    if (mistralTools.length > 0) {
-      chatOptions.tools = mistralTools;
-      chatOptions.toolChoice = 'auto';
-    }
-
-    let response = await mistral.chat.complete(chatOptions as Parameters<typeof mistral.chat.complete>[0]);
+    let response = await callMistral(mistralMessages);
     let choice = response.choices?.[0];
 
     if (!choice) {
@@ -129,56 +152,57 @@ export async function POST(req: NextRequest) {
     ) {
       rounds++;
 
-      // Add assistant message with tool calls
+      // Add assistant message with its tool_calls exactly as Mistral returned them
       mistralMessages.push({
         role: 'assistant',
         content: choice.message.content || '',
-        tool_calls: choice.message.toolCalls,
+        toolCalls: choice.message.toolCalls,
       });
 
-      // Execute each tool call via MCP
+      // Execute EVERY tool call and add a response for each
       for (const toolCall of choice.message.toolCalls) {
         const fnName = toolCall.function.name;
-        const fnArgs =
-          typeof toolCall.function.arguments === 'string'
-            ? JSON.parse(toolCall.function.arguments)
-            : toolCall.function.arguments;
-
-        let result: unknown;
+        let fnArgs: Record<string, unknown> = {};
         try {
-          result = await callMCPTool(mcpClient, fnName, fnArgs);
+          fnArgs =
+            typeof toolCall.function.arguments === 'string'
+              ? JSON.parse(toolCall.function.arguments)
+              : (toolCall.function.arguments as Record<string, unknown>) || {};
+        } catch {
+          fnArgs = {};
+        }
+
+        let resultText: string;
+        let resultData: unknown;
+        try {
+          const mcpResult = await callMCPTool(mcpClient, fnName, fnArgs);
+          resultText = extractMCPText(mcpResult);
+          resultData = mcpResult;
         } catch (toolError) {
           console.error(`MCP tool error (${fnName}):`, toolError);
-          result = {
-            error: `Erreur lors de l'appel à ${fnName}: ${
-              toolError instanceof Error ? toolError.message : 'Erreur inconnue'
-            }`,
-          };
+          resultText = JSON.stringify({
+            error: `Erreur: ${toolError instanceof Error ? toolError.message : 'inconnue'}`,
+          });
+          resultData = { error: resultText };
         }
 
         toolResults.push({
           name: fnName,
           displayName: getToolDisplayName(fnName),
-          data: result,
+          data: resultData,
         });
 
+        // Tool response must match the tool call ID
         mistralMessages.push({
           role: 'tool',
-          tool_call_id: toolCall.id,
+          toolCallId: toolCall.id,
           name: fnName,
-          content:
-            typeof result === 'string' ? result : JSON.stringify(result),
+          content: resultText,
         });
       }
 
       // Call Mistral again with tool results
-      response = await mistral.chat.complete({
-        model,
-        messages: mistralMessages as Parameters<typeof mistral.chat.complete>[0]['messages'],
-        tools: mistralTools as Parameters<typeof mistral.chat.complete>[0]['tools'],
-        toolChoice: 'auto',
-      });
-
+      response = await callMistral(mistralMessages);
       choice = response.choices?.[0];
       if (!choice) {
         throw new Error("Pas de réponse de Mistral après l'exécution des outils");
@@ -190,11 +214,10 @@ export async function POST(req: NextRequest) {
       try {
         await mcpClient.close();
       } catch {
-        // Ignore close errors
+        // Ignore
       }
     }
 
-    // ── Return response ──
     return NextResponse.json({
       message:
         choice.message.content || "Je n'ai pas pu générer de réponse.",

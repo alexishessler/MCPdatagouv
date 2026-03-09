@@ -1,10 +1,7 @@
 export default function Header() {
   return (
     <header className="relative flex-shrink-0">
-      {/* Tricolor accent line */}
-      <div className="tricolor-line" />
-
-      <div className="bg-white border-b border-[var(--border)] px-4 sm:px-6 py-3">
+      <div className="bg-white px-4 sm:px-6 py-3">
         <div className="max-w-3xl mx-auto flex items-center gap-3.5">
           {/* Profile photo */}
           <img
@@ -44,6 +41,8 @@ export default function Header() {
           </div>
         </div>
       </div>
+      {/* Tricolor sword shimmer — border bottom */}
+      <div className="tricolor-sword" />
     </header>
   );
 }
