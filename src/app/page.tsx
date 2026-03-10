@@ -4,7 +4,7 @@ import HowItWorksModal from '@/components/HowItWorksModal';
 
 export default function Home() {
   return (
-    <main className="flex flex-col h-screen bg-[var(--bg)]">
+    <main className="flex flex-col h-screen bg-[var(--bg)]" style={{ height: '100dvh' }}>
       <Header />
       <HowItWorksModal />
       <ChatBot />
